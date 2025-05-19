@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Loading from "./Loading";
+import "./App.css";
+import SellIcon from "@mui/icons-material/Sell";
 
 function App() {
   const GOOGLE_SCRIPT_URL =
@@ -20,7 +22,7 @@ function App() {
   });
 
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(GOOGLE_SCRIPT_URL)
@@ -56,125 +58,113 @@ function App() {
   };
 
   return (
-    <div className="mx-auto p-6">
+    <div className="container mx-auto">
       {loading ? (
-        <Loading /> // Show loading only if loading === true
+        <Loading />
       ) : (
-        <>
-          {/* Summary Section */}
-          <div className="bg-gray-100 p-4 rounded mb-6 flex justify-between text-center">
-            <div>
-              <p className="font-semibold">Total Income</p>
-              <p className="text-green-600">₹{getData.totalIncome}</p>
+        <div className="box p-5">
+          <div className="header flex justify-between items-center">
+            <div className="title">
+              <p className="titleFont">
+                Expense Tracker
+                <SellIcon />
+              </p>
             </div>
-            <div>
-              <p className="font-semibold">Total Expense</p>
-              <p className="text-red-600">₹{getData.expense}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Current Balance</p>
-              <p className="text-blue-600">₹{getData.balance}</p>
+
+            <div className="totalExpense p-2">
+              <p>Total expense</p>
+              <p className="text-green -500">₹100</p>
             </div>
           </div>
 
-          {/* Add Transaction Form */}
-          <div className="Add_transaction mb-6 bg-gray-100 p-4 rounded">
-            <h1 className="text-2xl font-semibold mb-4">Add Transaction</h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label>Type:</label>
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    required
-                    className="border p-2 w-full rounded"
-                  >
-                    <option value="">--Select--</option>
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Amount:</label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    required
-                    className="border p-2 w-full rounded"
-                  />
-                </div>
-                <div>
-                  <label>Category:</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                    className="border p-2 w-full rounded"
-                  >
-                    <option value="">--Select--</option>
-                    <option value="salary">Salary</option>
-                    <option value="food">Food</option>
-                    <option value="transport">Transport</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Date:</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    required
-                    className="border p-2 w-full rounded"
-                  />
-                </div>
-              </div>
-              <div>
-                <label>Note:</label>
-                <textarea
-                  name="note"
-                  value={formData.note}
-                  onChange={handleChange}
-                  className="border p-2 w-full rounded"
-                />
-              </div>
-              <div className="text-right">
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
+          <div className="content">
+            <div className="form p-4 rounded mt-6">
+              <h2 className="text-xl font-semibold mb-4">Add Transaction</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="">
+                  {/* Type */}
+                  <div>
+                    <label className="block mb-1">Type</label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleChange}
+                      required
+                      className="border p-2 w-full rounded"
+                    >
+                      <option value="">--Select--</option>
+                      <option value="income">Income</option>
+                      <option value="expense">Expense</option>
+                    </select>
+                  </div>
 
-          {/* Transaction List */}
-          <div className="List_of_transaction">
-            <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
-            <ul className="space-y-2">
-              {transactions.map((item, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between p-3 border rounded"
-                >
-                  <span>{item.note}</span>
-                  <span>{item.amount}</span>
-                  <span className="capitalize">{item.type}</span>
-                  <span>{item.category}</span>
-                  <span>{item.date}</span>
-                </li>
-              ))}
-            </ul>
+                  <div>
+                    <label className="block mb-1">Amount</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      required
+                      className="border p-2 w-full rounded"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-1">Category</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="border p-2 w-full rounded"
+                    >
+                      <option value="">--Select--</option>
+                      <option value="salary">Salary</option>
+                      <option value="food">Food</option>
+                      <option value="transport">Transport</option>
+                      <option value="entertainment">Entertainment</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1">Date</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      required
+                      className="border p-2 w-full rounded"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-1">Note</label>
+                  <textarea
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    className="border p-2 w-full rounded"
+                  />
+                </div>
+
+                <div className="text-right">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="showTransaction"></div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
