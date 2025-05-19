@@ -3,6 +3,7 @@ import Loading from "./Loading";
 import "./App.css";
 import SellIcon from "@mui/icons-material/Sell";
 
+
 function App() {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
@@ -15,12 +16,6 @@ function App() {
     date: "",
   });
 
-  const [getData] = useState({
-    totalIncome: 0,
-    balance: 0,
-    expense: 0,
-  });
-
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,6 +25,7 @@ function App() {
       .then((data) => {
         console.log("Google Sheet Data:", data);
         setTransactions(data);
+        console.log("transactions:", transactions);
       })
       .catch((err) => console.error("Error fetching data:", err))
       .finally(() => setLoading(false));
@@ -57,6 +53,15 @@ function App() {
     }
   };
 
+  const handleEdit = (transaction) => {
+    setFormData({
+      type: transaction.Type || "",
+      amount: transaction.Amount?.toString() || "",
+      category: transaction.Category || "",
+      note: transaction.Note || "",
+      date: transaction.Date?.slice(0, 10) || "",
+    });
+  };
   return (
     <div className="container mx-auto mt-10">
       {loading ? (
