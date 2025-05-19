@@ -162,7 +162,9 @@ function App() {
               </form>
             </div>
 
-            <div className="showTransaction"></div>
+            <div className="showTransaction">
+              <p>Hi</p>
+            </div>
           </div>
         </div>
       )}
