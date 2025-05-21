@@ -89,19 +89,19 @@ function App() {
     
     console.log("formData", formData);
     setTransactions((prev) => [tempData, ...prev]);
-    // try {
-    //   const res = await fetch(GOOGLE_SCRIPT_URL, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(formData),
-    //   });
-    //   const result = await res.json();
-    //   console.log(result);
-    //   alert("Transaction saved!");
-    // } catch (err) {
-    //   console.error(err);
-    //   alert("Failed to save transaction.");
-    // }
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const result = await res.json();
+      console.log(result);
+      alert("Transaction saved!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save transaction.");
+    }
   };
   return (
     <div className="container mx-auto mt-10">
@@ -165,7 +165,7 @@ function App() {
                     <input
                       type="number"
                       name="amount"
-                      value={formData.amount}
+                      value={formData.amount || ""}
                       onChange={handleChange}
                       required
                       step="0.01"
