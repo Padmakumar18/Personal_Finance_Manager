@@ -16,6 +16,7 @@ function App() {
   });
 
   const [transactions, setTransactions] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +32,10 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    console.log("Updated transactions:", transactions);
+  }, [transactions]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -38,6 +43,7 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("formData", formData);
     try {
       const res = await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
@@ -52,16 +58,6 @@ function App() {
       alert("Failed to save transaction.");
     }
   };
-
-  const handleEdit = (transaction) => {
-    setFormData({
-      type: transaction.Type || "",
-      amount: transaction.Amount?.toString() || "",
-      category: transaction.Category || "",
-      note: transaction.Note || "",
-      date: transaction.Date?.slice(0, 10) || "",
-    });
-  };
   return (
     <div className="container mx-auto mt-10">
       {loading ? (
@@ -72,13 +68,19 @@ function App() {
             <div className="title">
               <p className="titleFont">
                 Expense Tracker
-                <SellIcon />
+                {/* <SellIcon /> */}
               </p>
             </div>
 
-            <div className="totalExpense p-2">
-              <p>Total expense</p>
-              <p className="text-green -500">₹100</p>
+            <div className="flex">
+              <div className="totalExpense p-2">
+                <p>Total Icome</p>
+                <p className="text-green -500">₹100</p>
+              </div>
+              <div className="totalExpense p-2 ml-3">
+                <p>Total expense</p>
+                <p className="text-green -500">₹100</p>
+              </div>
             </div>
           </div>
 
@@ -192,13 +194,14 @@ function App() {
                     <tr className="bg-blue-100 text-left text-sm font-medium text-gray-700">
                       <th className="px-4 py-2 border">Date</th>
                       <th className="px-4 py-2 border">Type</th>
+                      <th className="px-4 py-2 border">Category</th>
                       <th className="px-4 py-2 border">Note</th>
                       <th className="px-4 py-2 border">Amount</th>
                       <th className="px-4 py-2 border">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions ? (
+                    {transactions.length === 0 ? (
                       <tr>
                         <td
                           colSpan="5"
@@ -210,12 +213,19 @@ function App() {
                     ) : (
                       transactions.map((tx, index) => (
                         <tr key={index} className="text-sm text-gray-700">
-                          <td className="px-4 py-2 border">{tx.date}</td>
+                          <td className="px-4 py-2 border">{`${new Date(
+                            tx.Date
+                          ).getDate()}-${new Date(
+                            tx.Date
+                          ).getMonth()}-${new Date(
+                            tx.Date
+                          ).getFullYear()}`}</td>
                           <td className="px-4 py-2 border capitalize">
-                            {tx.type}
+                            {tx.Type}
                           </td>
-                          <td className="px-4 py-2 border">{tx.note}</td>
-                          <td className="px-4 py-2 border">₹{tx.amount}</td>
+                          <td className="px-4 py-2 border">{tx.Category}</td>
+                          <td className="px-4 py-2 border">{tx.Note}</td>
+                          <td className="px-4 py-2 border">₹{tx.Amount}</td>
                           <td className="px-4 py-2 border">
                             <button
                               className="text-red-600 hover:underline text-sm"
