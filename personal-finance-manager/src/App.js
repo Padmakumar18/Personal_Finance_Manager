@@ -7,17 +7,20 @@ function App() {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
 
-  const [formData, setFormData] = useState({
-    type: "",
-    amount: "",
-    category: "",
-    note: "",
-    date: "",
-  });
+  const [formData, setFormData] = useState([]);
+
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(0);
 
   const [transactions, setTransactions] = useState([]);
-
   const [loading, setLoading] = useState(true);
+
+  function deleteRow(indexToDelete) {
+    const updated = [...transactions];
+    updated.splice(indexToDelete, 1);
+    setTransactions(updated);
+  }
 
   useEffect(() => {
     fetch(GOOGLE_SCRIPT_URL)
@@ -34,29 +37,56 @@ function App() {
 
   useEffect(() => {
     console.log("Updated transactions:", transactions);
+    if (transactions && transactions.length > 0) {
+      setTotalIncome(transactions[transactions.length - 1].Income);
+      setTotalExpense(transactions[transactions.length - 1].Expense);
+      setTotalBalance(transactions[transactions.length - 1].Balance);
+    }
   }, [transactions]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const newValue = name === "date" ? new Date(value).toISOString() : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
   };
 
   const handleSubmit = async (e) => {
+    const tempData = {
+      Amount: formData.amount,
+      Balance: totalBalance,
+      Category: formData.category,
+      Date: formData.date,
+      Expense: totalExpense,
+      ID: transactions ? transactions[transactions.length - 1].ID + 1 : 1,
+      Income: totalIncome,
+      Note: formData.note,
+      Type: formData.type,
+    };
+
+    console.log("tempData")
+    console.log(tempData)
+
     e.preventDefault();
     console.log("formData", formData);
-    try {
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const result = await res.json();
-      console.log(result);
-      alert("Transaction saved!");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save transaction.");
-    }
+    console.log(new Date(formData.Date));
+    setTransactions((prev) => [tempData, ...prev]);
+    // try {
+    //   const res = await fetch(GOOGLE_SCRIPT_URL, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify(formData),
+    //   });
+    //   const result = await res.json();
+    //   console.log(result);
+    //   alert("Transaction saved!");
+    // } catch (err) {
+    //   console.error(err);
+    //   alert("Failed to save transaction.");
+    // }
   };
   return (
     <div className="container mx-auto mt-10">
@@ -75,31 +105,33 @@ function App() {
             <div className="flex">
               <div className="totalExpense p-2">
                 <p>Total Icome</p>
-                <p className="text-green -500">₹100</p>
+                <p className="text-green-500">₹ {totalIncome}</p>
               </div>
               <div className="totalExpense p-2 ml-3">
                 <p>Total expense</p>
-                <p className="text-green -500">₹100</p>
+                <p className="text-red-500">₹ {totalExpense}</p>
+              </div>
+              <div className="totalExpense p-2 ml-3">
+                <p>Total Balance</p>
+                <p className="text-blue-500">₹ {totalBalance}</p>
               </div>
             </div>
           </div>
 
           <div className="content grid md:grid-cols-3 gap-4 mt-6">
-            {/* Form (1/3 width on medium+ screens) */}
             <div className="form md:col-span-1 p-4 rounded bg-white shadow-md">
               <h2 className="text-xl font-semibold mb-4">
                 Add New Transaction
               </h2>
               <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg">
                 <div className="grid grid-cols-1 gap-4">
-                  {/* Type */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Type
                     </label>
                     <select
                       name="type"
-                      value={formData.type}
+                      value={formData.Type}
                       onChange={handleChange}
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -118,7 +150,7 @@ function App() {
                     <input
                       type="number"
                       name="amount"
-                      value={formData.amount}
+                      value={formData.Amount}
                       onChange={handleChange}
                       required
                       step="0.01"
@@ -133,7 +165,7 @@ function App() {
                     </label>
                     <select
                       name="category"
-                      value={formData.category}
+                      value={formData.Category}
                       onChange={handleChange}
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -154,7 +186,7 @@ function App() {
                     <input
                       type="date"
                       name="date"
-                      value={formData.date}
+                      value={formData.date ? formData.date.slice(0, 10) : ""}
                       onChange={handleChange}
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -168,20 +200,30 @@ function App() {
                     </label>
                     <textarea
                       name="note"
-                      value={formData.note}
+                      value={formData.Note}
                       onChange={handleChange}
                       rows="3"
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className="text-right">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Submit
-                    </button>
+                  <div className="flex justify-between">
+                    <div className="w-1/2 pr-2">
+                      <button
+                        type="reset"
+                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="w-1/2 pl-2">
+                      <button
+                        type="submit"
+                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Submit
+                      </button>
+                    </div>
                   </div>
                 </div>
               </form>
@@ -229,9 +271,7 @@ function App() {
                           <td className="px-4 py-2 border">
                             <button
                               className="text-red-600 hover:underline text-sm"
-                              onClick={() =>
-                                alert(`Delete action for index ${index}`)
-                              }
+                              onClick={() => deleteRow(index)}
                             >
                               Delete
                             </button>
@@ -242,7 +282,6 @@ function App() {
                   </tbody>
                 </table>
               </div>
-              {/* )} */}
             </div>
           </div>
         </div>
