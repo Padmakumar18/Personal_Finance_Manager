@@ -146,7 +146,7 @@ function App() {
                     </label>
                     <select
                       name="type"
-                      value={formData.Type}
+                      value={formData.type}
                       onChange={handleChange}
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -165,7 +165,7 @@ function App() {
                     <input
                       type="number"
                       name="amount"
-                      value={formData.Amount}
+                      value={formData.amount}
                       onChange={handleChange}
                       required
                       step="0.01"
@@ -180,7 +180,7 @@ function App() {
                     </label>
                     <select
                       name="category"
-                      value={formData.Category}
+                      value={formData.category}
                       onChange={handleChange}
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -215,7 +215,7 @@ function App() {
                     </label>
                     <textarea
                       name="note"
-                      value={formData.Note}
+                      value={formData.note}
                       onChange={handleChange}
                       rows="3"
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
