@@ -3,7 +3,6 @@ import Loading from "./Loading";
 import "./App.css";
 import SellIcon from "@mui/icons-material/Sell";
 
-
 function App() {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
@@ -26,6 +25,7 @@ function App() {
         console.log("Google Sheet Data:", data);
         setTransactions(data);
         console.log("transactions:", transactions);
+        console.log("transactions:", transactions.length);
       })
       .catch((err) => console.error("Error fetching data:", err))
       .finally(() => setLoading(false));
@@ -186,24 +186,29 @@ function App() {
             </div>
 
             <div className="showTransaction md:col-span-2 p-4 rounded shadow-inner">
-              {transactions.length === 0 ? (
-                <p className="text-gray-500 italic">
-                  No transactions to display yet.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full table-auto bg-white border rounded shadow-sm">
-                    <thead>
-                      <tr className="bg-blue-100 text-left text-sm font-medium text-gray-700">
-                        <th className="px-4 py-2 border">Date</th>
-                        <th className="px-4 py-2 border">Type</th>
-                        <th className="px-4 py-2 border">Note</th>
-                        <th className="px-4 py-2 border">Amount</th>
-                        <th className="px-4 py-2 border">Action</th>
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-auto bg-white border rounded shadow-sm">
+                  <thead>
+                    <tr className="bg-blue-100 text-left text-sm font-medium text-gray-700">
+                      <th className="px-4 py-2 border">Date</th>
+                      <th className="px-4 py-2 border">Type</th>
+                      <th className="px-4 py-2 border">Note</th>
+                      <th className="px-4 py-2 border">Amount</th>
+                      <th className="px-4 py-2 border">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions ? (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="text-center text-gray-500 italic py-4"
+                        >
+                          No transactions to display yet.
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {transactions.map((tx, index) => (
+                    ) : (
+                      transactions.map((tx, index) => (
                         <tr key={index} className="text-sm text-gray-700">
                           <td className="px-4 py-2 border">{tx.date}</td>
                           <td className="px-4 py-2 border capitalize">
@@ -222,11 +227,12 @@ function App() {
                             </button>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* )} */}
             </div>
           </div>
         </div>
