@@ -7,14 +7,18 @@ function App() {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
 
-  const [formData, setFormData] = useState([]);
-
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
-
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    Type: "",
+    Amount: "",
+    Category: "",
+    Date: "",
+    Note: "",
+  });
 
   function deleteRow(indexToDelete) {
     const updated = [...transactions];
@@ -44,17 +48,28 @@ function App() {
     }
   }, [transactions]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const newValue = name === "date" ? new Date(value).toISOString() : value;
+ const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "date" ? new Date(value).toISOString() : value,
+  }));
+};
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
-  };
+
+ function clearFormdata() {
+  setFormData({
+    type: "",
+    amount: "",
+    category: "",
+    date: "",
+    note: "",
+  });
+}
+
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
     const tempData = {
       Amount: formData.amount,
       Balance: totalBalance,
@@ -67,12 +82,12 @@ function App() {
       Type: formData.type,
     };
 
-    console.log("tempData")
-    console.log(tempData)
+    console.log("tempData");
+    console.log(tempData);
+    clearFormdata();
 
-    e.preventDefault();
+    
     console.log("formData", formData);
-    console.log(new Date(formData.Date));
     setTransactions((prev) => [tempData, ...prev]);
     // try {
     //   const res = await fetch(GOOGLE_SCRIPT_URL, {
