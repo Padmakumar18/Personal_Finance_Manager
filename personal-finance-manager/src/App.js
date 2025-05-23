@@ -85,38 +85,54 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    let updatedIncome = totalIncome;
+    let updatedExpense = totalExpense;
+    let updatedBalance = totalBalance;
+
+    if (formData.type === "income") {
+      updatedIncome = parseInt(totalIncome) + parseInt(formData.amount);
+      updatedBalance = parseInt(totalBalance) + parseInt(formData.amount);
+    } else {
+      updatedIncome = parseInt(totalIncome) - parseInt(formData.amount);
+      updatedExpense = parseInt(totalExpense) + parseInt(formData.amount);
+      updatedBalance = parseInt(totalBalance) - parseInt(formData.amount);
+    }
+
+    setTotalIncome(updatedIncome);
+    setTotalExpense(updatedExpense);
+    setTotalBalance(updatedBalance);
+
     const tempData = {
       Amount: formData.amount,
-      Balance: totalBalance,
+      Balance: updatedBalance,
       Category: formData.category,
       Date: formData.date,
-      Expense: totalExpense,
+      Expense: updatedExpense,
       ID: transactions ? transactions[transactions.length - 1].ID + 1 : 1,
-      Income: totalIncome,
+      Income: updatedIncome,
       Note: formData.note,
       Type: formData.type,
     };
 
-    console.log("tempData");
-    console.log(tempData);
+    console.log("tempData", tempData);
     clearFormdata();
-
-    console.log("formData", formData);
     setTransactions((prev) => [tempData, ...prev]);
-    // try {
-    //   const res = await fetch(GOOGLE_SCRIPT_URL, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(formData),
-    //   });
-    //   const result = await res.json();
-    //   console.log(result);
-    //   alert("Transaction saved!");
-    // } catch (err) {
-    //   console.error(err);
-    //   alert("Failed to save transaction.");
-    // }
   };
+
+  // try {
+  //   const res = await fetch(GOOGLE_SCRIPT_URL, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(formData),
+  //   });
+  //   const result = await res.json();
+  //   console.log(result);
+  //   alert("Transaction saved!");
+  // } catch (err) {
+  //   console.error(err);
+  //   alert("Failed to save transaction.");
+  // }
   return (
     <div className="container mx-auto mt-10">
       {loading ? (
@@ -171,42 +187,7 @@ function App() {
                     </select>
                   </div>
 
-                  {/* Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Amount <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="amount"
-                      value={formData.amount || ""}
-                      onChange={handleChange}
-                      required
-                      step="0.01"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-
                   {/* Category */}
-                  {/* <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Category
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select --</option>
-                      <option value="salary">Salary</option>
-                      <option value="food">Food</option>
-                      <option value="transport">Transport</option>
-                      <option value="entertainment">Entertainment</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div> */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Category <span className="text-red-600">*</span>
@@ -231,6 +212,42 @@ function App() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Amount <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="amount"
+                      value={formData.amount || ""}
+                      onChange={handleChange}
+                      required
+                      step="0.01"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">-- Select --</option>
+                      <option value="salary">Salary</option>
+                      <option value="food">Food</option>
+                      <option value="transport">Transport</option>
+                      <option value="entertainment">Entertainment</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
