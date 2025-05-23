@@ -7,6 +7,15 @@ function App() {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
 
+  const incomeCategories = ["Salary", "Business", "Investment", "Other"];
+  const expenseCategories = [
+    "Food",
+    "Transport",
+    "Entertainment",
+    "Bills",
+    "Other",
+  ];
+
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
@@ -48,25 +57,31 @@ function App() {
     }
   }, [transactions]);
 
- const handleChange = (e) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({
-    ...prev,
-    [name]: name === "date" ? new Date(value).toISOString() : value,
-  }));
-};
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "type") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        category: "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: name === "date" ? new Date(value).toISOString() : value,
+      }));
+    }
+  };
 
-
- function clearFormdata() {
-  setFormData({
-    type: "",
-    amount: "",
-    category: "",
-    date: "",
-    note: "",
-  });
-}
-
+  function clearFormdata() {
+    setFormData({
+      type: "",
+      amount: "",
+      category: "",
+      date: "",
+      note: "",
+    });
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,22 +101,21 @@ function App() {
     console.log(tempData);
     clearFormdata();
 
-    
     console.log("formData", formData);
     setTransactions((prev) => [tempData, ...prev]);
-    try {
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const result = await res.json();
-      console.log(result);
-      alert("Transaction saved!");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save transaction.");
-    }
+    // try {
+    //   const res = await fetch(GOOGLE_SCRIPT_URL, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify(formData),
+    //   });
+    //   const result = await res.json();
+    //   console.log(result);
+    //   alert("Transaction saved!");
+    // } catch (err) {
+    //   console.error(err);
+    //   alert("Failed to save transaction.");
+    // }
   };
   return (
     <div className="container mx-auto mt-10">
@@ -142,7 +156,7 @@ function App() {
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Type
+                      Type <span className="text-red-600">*</span>
                     </label>
                     <select
                       name="type"
@@ -160,7 +174,7 @@ function App() {
                   {/* Amount */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Amount
+                      Amount <span className="text-red-600">*</span>
                     </label>
                     <input
                       type="number"
@@ -174,7 +188,7 @@ function App() {
                   </div>
 
                   {/* Category */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Category
                     </label>
@@ -192,11 +206,35 @@ function App() {
                       <option value="entertainment">Entertainment</option>
                       <option value="other">Other</option>
                     </select>
+                  </div> */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">-- Select --</option>
+                      {(formData.type === "income"
+                        ? incomeCategories
+                        : formData.type === "expense"
+                        ? expenseCategories
+                        : []
+                      ).map((cat) => (
+                        <option key={cat} value={cat.toLowerCase()}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Date
+                      Date <span className="text-red-600">*</span>
                     </label>
                     <input
                       type="date"
