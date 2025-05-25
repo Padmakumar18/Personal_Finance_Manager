@@ -29,11 +29,11 @@ function App() {
     Note: "",
   });
 
-  function deleteRow(indexToDelete) {
+  const deleteRow = (indexToDelete) => {
     const updated = [...transactions];
     updated.splice(indexToDelete, 1);
     setTransactions(updated);
-  }
+  };
 
   useEffect(() => {
     fetch(GOOGLE_SCRIPT_URL)
@@ -47,6 +47,18 @@ function App() {
       .catch((err) => console.error("Error fetching data:", err))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    console.log("Updated Income:", totalIncome);
+  }, [totalIncome]);
+
+  useEffect(() => {
+    console.log("Updated Expense:", totalExpense);
+  }, [totalExpense]);
+
+  useEffect(() => {
+    console.log("Updated Balance:", totalBalance);
+  }, [totalBalance]);
 
   useEffect(() => {
     console.log("Updated transactions:", transactions);
@@ -73,7 +85,7 @@ function App() {
     }
   };
 
-  function clearFormdata() {
+  const clearFormData = () => {
     setFormData({
       type: "",
       amount: "",
@@ -81,43 +93,42 @@ function App() {
       date: "",
       note: "",
     });
-  }
+  };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    let updatedIncome = totalIncome;
-    let updatedExpense = totalExpense;
-    let updatedBalance = totalBalance;
+    let updatedIncome = parseInt(totalIncome) || 0;
+    let updatedExpense = parseInt(totalExpense) || 0;
+    let updatedBalance = parseInt(totalBalance) || 0;
+
+    const amount = parseInt(formData.amount);
 
     if (formData.type === "income") {
-      updatedIncome = parseInt(totalIncome) + parseInt(formData.amount);
-      updatedBalance = parseInt(totalBalance) + parseInt(formData.amount);
+      updatedIncome += amount;
+      updatedBalance += amount;
     } else {
-      updatedIncome = parseInt(totalIncome) - parseInt(formData.amount);
-      updatedExpense = parseInt(totalExpense) + parseInt(formData.amount);
-      updatedBalance = parseInt(totalBalance) - parseInt(formData.amount);
+      updatedExpense += amount;
+      updatedBalance -= amount;
     }
 
+    const newTransaction = {
+      ID: transactions.length > 0 ? transactions[0].ID + 1 : 1,
+      Type: formData.type,
+      Amount: formData.amount,
+      Category: formData.category,
+      Date: formData.date,
+      Note: formData.note || "----",
+      Income: updatedIncome,
+      Expense: updatedExpense,
+      Balance: updatedBalance,
+    };
+
+    setTransactions((prev) => [newTransaction, ...prev]);
     setTotalIncome(updatedIncome);
     setTotalExpense(updatedExpense);
     setTotalBalance(updatedBalance);
-
-    const tempData = {
-      Amount: formData.amount,
-      Balance: updatedBalance,
-      Category: formData.category,
-      Date: formData.date,
-      Expense: updatedExpense,
-      ID: transactions ? transactions[transactions.length - 1].ID + 1 : 1,
-      Income: updatedIncome,
-      Note: formData.note,
-      Type: formData.type,
-    };
-
-    console.log("tempData", tempData);
-    clearFormdata();
-    setTransactions((prev) => [tempData, ...prev]);
+    clearFormData();
   };
 
   // try {
@@ -324,24 +335,22 @@ function App() {
                       </tr>
                     ) : (
                       transactions.map((tx, index) => (
-                        <tr key={index} className="text-sm text-gray-700">
-                          <td className="px-4 py-2 border">{`${new Date(
-                            tx.Date
-                          ).getDate()}-${new Date(
-                            tx.Date
-                          ).getMonth()}-${new Date(
-                            tx.Date
-                          ).getFullYear()}`}</td>
+                        <tr key={index} className="text-sm border-t">
+                          <td className="px-4 py-2 border">
+                            {tx.Date?.slice(0, 10)}
+                          </td>
                           <td className="px-4 py-2 border capitalize">
                             {tx.Type}
                           </td>
-                          <td className="px-4 py-2 border">{tx.Category}</td>
+                          <td className="px-4 py-2 border capitalize">
+                            {tx.Category}
+                          </td>
                           <td className="px-4 py-2 border">{tx.Note}</td>
-                          <td className="px-4 py-2 border">₹{tx.Amount}</td>
-                          <td className="px-4 py-2 border">
+                          <td className="px-4 py-2 border">₹ {tx.Amount}</td>
+                          <td className="px-4 py-2 border text-center">
                             <button
-                              className="text-red-600 hover:underline text-sm"
                               onClick={() => deleteRow(index)}
+                              className="px-3 py-1 text-red-500 rounded"
                             >
                               Delete
                             </button>
