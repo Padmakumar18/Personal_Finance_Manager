@@ -22,17 +22,36 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    Type: "",
-    Amount: "",
-    Category: "",
-    Date: "",
-    Note: "",
+    type: "",
+    amount: "",
+    category: "",
+    date: "",
+    note: "",
   });
 
   const deleteRow = (indexToDelete) => {
-    const updated = [...transactions];
-    updated.splice(indexToDelete, 1);
-    setTransactions(updated);
+    const transactionToDelete = transactions[indexToDelete];
+    const amount = parseInt(transactionToDelete.Amount);
+
+    let updatedIncome = totalIncome;
+    let updatedExpense = totalExpense;
+
+    if (transactionToDelete.Type === "income") {
+      updatedIncome -= amount;
+    } else {
+      updatedExpense -= amount;
+    }
+
+    const updatedBalance = updatedIncome - updatedExpense;
+
+    const updatedTransactions = transactions.filter(
+      (_, index) => index !== indexToDelete
+    );
+
+    setTransactions(updatedTransactions);
+    setTotalIncome(updatedIncome);
+    setTotalExpense(updatedExpense);
+    setTotalBalance(updatedBalance);
   };
 
   useEffect(() => {
@@ -40,22 +59,16 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         console.log("Google Sheet Data:", data);
-        setTransactions(data);
-        console.log("transactions:", transactions);
-        console.log("transactions:", transactions.length);
+        if (data && data.length > 0) {
+          setTransactions(data);
+          setTotalIncome(data[data.length - 1].Income || 0);
+          setTotalExpense(data[data.length - 1].Expense || 0);
+          setTotalBalance(data[data.length - 1].Balance || 0);
+        }
       })
       .catch((err) => console.error("Error fetching data:", err))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    console.log("Updated transactions:", transactions);
-    if (transactions && transactions.length > 0) {
-      setTotalIncome(transactions[transactions.length - 1].Income);
-      setTotalExpense(transactions[transactions.length - 1].Expense);
-      setTotalBalance(transactions[transactions.length - 1].Balance);
-    }
-  }, [transactions]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -86,11 +99,10 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    let updatedIncome = parseInt(totalIncome) || 0;
-    let updatedExpense = parseInt(totalExpense) || 0;
-    let updatedBalance = parseInt(totalBalance) || 0;
-
-    const amount = parseInt(formData.amount);
+    const amount = parseInt(formData.amount) || 0;
+    let updatedIncome = totalIncome;
+    let updatedExpense = totalExpense;
+    let updatedBalance = totalBalance;
 
     if (formData.type === "income") {
       updatedIncome += amount;
@@ -98,12 +110,15 @@ function App() {
     } else {
       updatedExpense += amount;
       updatedBalance -= amount;
+      if (updatedBalance < 0) {
+        updatedBalance = 0;
+      }
     }
 
     const newTransaction = {
       ID: transactions.length > 0 ? transactions[0].ID + 1 : 1,
       Type: formData.type,
-      Amount: formData.amount,
+      Amount: amount,
       Category: formData.category,
       Date: formData.date,
       Note: formData.note || "----",
@@ -116,23 +131,10 @@ function App() {
     setTotalIncome(updatedIncome);
     setTotalExpense(updatedExpense);
     setTotalBalance(updatedBalance);
-    console.log(updatedBalance + " " + updatedExpense + " " + updatedIncome)
+
     clearFormData();
   };
 
-  // try {
-  //   const res = await fetch(GOOGLE_SCRIPT_URL, {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(formData),
-  //   });
-  //   const result = await res.json();
-  //   console.log(result);
-  //   alert("Transaction saved!");
-  // } catch (err) {
-  //   console.error(err);
-  //   alert("Failed to save transaction.");
-  // }
   return (
     <div className="container mx-auto mt-10">
       {loading ? (
@@ -141,19 +143,16 @@ function App() {
         <div className="box p-5">
           <div className="header flex justify-between items-center">
             <div className="title">
-              <p className="titleFont">
-                Expense Tracker
-                {/* <SellIcon /> */}
-              </p>
+              <p className="titleFont">Expense Tracker</p>
             </div>
 
             <div className="flex">
               <div className="totalExpense p-2">
-                <p>Total Icome</p>
+                <p>Total Income</p>
                 <p className="text-green-500">₹ {totalIncome}</p>
               </div>
               <div className="totalExpense p-2 ml-3">
-                <p>Total expense</p>
+                <p>Total Expense</p>
                 <p className="text-red-500">₹ {totalExpense}</p>
               </div>
               <div className="totalExpense p-2 ml-3">
@@ -162,7 +161,6 @@ function App() {
               </div>
             </div>
           </div>
-
           <div className="content grid md:grid-cols-3 gap-4 mt-6">
             <div className="form md:col-span-1 p-4 rounded bg-white shadow-md">
               <h2 className="text-xl font-semibold mb-4">
