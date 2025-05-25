@@ -49,18 +49,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    console.log("Updated Income:", totalIncome);
-  }, [totalIncome]);
-
-  useEffect(() => {
-    console.log("Updated Expense:", totalExpense);
-  }, [totalExpense]);
-
-  useEffect(() => {
-    console.log("Updated Balance:", totalBalance);
-  }, [totalBalance]);
-
-  useEffect(() => {
     console.log("Updated transactions:", transactions);
     if (transactions && transactions.length > 0) {
       setTotalIncome(transactions[transactions.length - 1].Income);
@@ -128,6 +116,7 @@ function App() {
     setTotalIncome(updatedIncome);
     setTotalExpense(updatedExpense);
     setTotalBalance(updatedBalance);
+    console.log(updatedBalance + " " + updatedExpense + " " + updatedIncome)
     clearFormData();
   };
 
