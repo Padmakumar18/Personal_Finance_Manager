@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Loading from "./Loading";
 import "./App.css";
-import SellIcon from "@mui/icons-material/Sell";
+// import SellIcon from "@mui/icons-material/Sell";
+import axios from "axios";
+import supabase from './supabaseClient';
 
 function App() {
+  console.log("supabase")
+  console.log(supabase)
   const GOOGLE_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbwrkCkZ63uw7JkG5s61aF1hlLTZ0MQZ86cC588qukHHzjqr5a_iwcDp3ydq2hQWiWeL/exec";
+    "https://script.google.com/macros/s/AKfycbyBT9PZzeP0p0uxlcFL6zDQyBtL2QCTW7k0XdobKhbVTiX08QHAj20MDiq1j8jHMmHn/exec";
 
   const incomeCategories = ["Salary", "Business", "Investment", "Other"];
   const expenseCategories = [
@@ -54,7 +58,14 @@ function App() {
     setTotalBalance(updatedBalance);
   };
 
+  const fetchTodos = async () => {
+    const { data, error } = await supabase.from('expense_tracker').select('*');
+    if (error) console.error('Fetch error:', error);
+    else console.log(data)
+  };
+
   useEffect(() => {
+    fetchTodos()
     fetch(GOOGLE_SCRIPT_URL)
       .then((res) => res.json())
       .then((data) => {
@@ -96,7 +107,58 @@ function App() {
     });
   };
 
-  const handleSubmit = (e) => {
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   const amount = parseInt(formData.amount) || 0;
+  //   let updatedIncome = totalIncome;
+  //   let updatedExpense = totalExpense;
+  //   let updatedBalance = totalBalance;
+
+  //   if (formData.type === "income") {
+  //     updatedIncome += amount;
+  //     updatedBalance += amount;
+  //   } else {
+  //     updatedExpense += amount;
+  //     updatedBalance -= amount;
+  //     if (updatedBalance < 0) {
+  //       updatedBalance = 0;
+  //     }
+  //   }
+
+  //   const newTransaction = {
+  //     ID:
+  //       transactions.length > 0
+  //         ? transactions[transactions.length - 1].ID + 1
+  //         : 1,
+  //     Type: formData.type,
+  //     Amount: amount,
+  //     Category: formData.category,
+  //     Date: formData.date,
+  //     Note: formData.note || "----",
+  //     Income: updatedIncome,
+  //     Expense: updatedExpense,
+  //     Balance: updatedBalance,
+  //   };
+
+  //   console.log(newTransaction);
+
+  //   setTransactions((prev) => [newTransaction, ...prev]);
+  //   setTotalIncome(updatedIncome);
+  //   setTotalExpense(updatedExpense);
+  //   setTotalBalance(updatedBalance);
+
+  //   try {
+  //     const response = await axios.post(GOOGLE_SCRIPT_URL, formData);
+  //     console.log("Data saved successfully:", response.data);
+  //   } catch (error) {
+  //     console.error("Error saving data:", error);
+  //   }
+
+  //   clearFormData();
+  // };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const amount = parseInt(formData.amount) || 0;
@@ -115,25 +177,61 @@ function App() {
       }
     }
 
-    const newTransaction = {
-      ID: transactions.length > 0 ? transactions[0].ID + 1 : 1,
-      Type: formData.type,
-      Amount: amount,
-      Category: formData.category,
-      Date: formData.date,
-      Note: formData.note || "----",
-      Income: updatedIncome,
-      Expense: updatedExpense,
-      Balance: updatedBalance,
-    };
+    const newId =
+      transactions.length > 0
+        ? Math.max(...transactions.map((tx) => tx.ID)) + 1
+        : 1;
 
-    setTransactions((prev) => [newTransaction, ...prev]);
-    setTotalIncome(updatedIncome);
-    setTotalExpense(updatedExpense);
-    setTotalBalance(updatedBalance);
+    try {
+      const sheetData = {
+        action: "addTransaction",
+        data: {
+          ID: newId,
+          Date: formData.date || new Date().toISOString(),
+          Type: formData.type,
+          Amount: amount,
+          Category: formData.category,
+          Note: formData.note || "",
+          Income: updatedIncome,
+          Expense: updatedExpense,
+          Balance: updatedBalance,
+        },
+      };
 
-    clearFormData();
+      const response = await axios.post(GOOGLE_SCRIPT_URL, sheetData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data.result === "success") {
+        const newTransaction = {
+          ID: newId,
+          Date: sheetData.data.Date,
+          Type: formData.type,
+          Amount: amount,
+          Category: formData.category,
+          Note: formData.note || "----",
+          Income: updatedIncome,
+          Expense: updatedExpense,
+          Balance: updatedBalance,
+        };
+
+        setTransactions((prev) => [newTransaction, ...prev]);
+        setTotalIncome(updatedIncome);
+        setTotalExpense(updatedExpense);
+        setTotalBalance(updatedBalance);
+        clearFormData();
+      } else {
+        throw new Error("Failed to save to Google Sheet");
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("Failed to save transaction. Please try again.");
+    }
   };
+
+  
 
   return (
     <div className="container mx-auto mt-10">
@@ -226,26 +324,6 @@ function App() {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
-
-                  {/* <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Category
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select --</option>
-                      <option value="salary">Salary</option>
-                      <option value="food">Food</option>
-                      <option value="transport">Transport</option>
-                      <option value="entertainment">Entertainment</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
