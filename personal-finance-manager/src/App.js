@@ -56,10 +56,12 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // useEffect(()=>{
-  //   console.log("user")
-  //   console.log(user)
-  // },[user])
+  useEffect(()=>{
+    console.log("user")
+    console.log(user)
+    console.log("transactions")
+    console.log(transactions)
+  },[user,transactions])
 
   const deleteRow = (indexToDelete) => {
     const transactionToDelete = transactions[indexToDelete];
@@ -113,69 +115,59 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-    toast.success("Hi");
-    e.preventDefault();
+  e.preventDefault();
+  toast.success("Adding Transaction...");
 
-    const amount = parseInt(formData.amount) || 0;
-    let updatedIncome = totalIncome;
-    let updatedExpense = totalExpense;
-    let updatedBalance = totalBalance;
+  const amount = parseFloat(formData.amount) || 0;
+  let updatedIncome = totalIncome;
+  let updatedExpense = totalExpense;
+  let updatedBalance = totalBalance;
 
-    if (formData.type === "income") {
-      updatedIncome += amount;
-      updatedBalance += amount;
-    } else {
-      updatedExpense += amount;
-      updatedBalance -= amount;
-      if (updatedBalance < 0) {
-        updatedBalance = 0;
-      }
+  if (formData.type === "income") {
+    updatedIncome += amount;
+    updatedBalance += amount;
+  } else {
+    updatedExpense += amount;
+    updatedBalance -= amount;
+    if (updatedBalance < 0) {
+      updatedBalance = 0;
     }
+  }
 
-    const newTransaction = {
-      ID:
-        transactions.length > 0
-          ? transactions[transactions.length - 1].ID + 1
-          : 1,
-      Type: formData.type,
-      Amount: amount,
-      Category: formData.category,
-      Date: formData.date,
-      Note: formData.note || "----",
-      Income: updatedIncome,
-      Expense: updatedExpense,
-      Balance: updatedBalance,
-    };
-
-    console.log(newTransaction);
-
-    const { error } = await supabase
+  const { data, error } = await supabase
     .from('expense_tracker')
     .insert([
       {
         user_id: user.id,
-        created_at: newTransaction.Date,
-        type:newTransaction.Type,
-        amount: parseFloat(amount),
-        category:newTransaction.Category,
-        note:newTransaction.Note,
+        created_at: formData.date,
+        type: formData.type,
+        amount: amount,
+        category: formData.category,
+        note: formData.note || "----",
+        income: updatedIncome,
+        expense: updatedExpense,
+        balance: updatedBalance,
+        name: user.name || "User"
       }
     ])
+    .select('*');
 
-    if(error) {
-      console.error(error)
-    }
-    else {
-      toast.success("Added")
-    }
+  if (error) {
+    console.error("Insert error:", error);
+    toast.error("Failed to add transaction.");
+    return;
+  }
 
-    setTransactions((prev) => [newTransaction, ...prev]);
-    setTotalIncome(updatedIncome);
-    setTotalExpense(updatedExpense);
-    setTotalBalance(updatedBalance);
+  const inserted = data[0];
 
-    clearFormData();
-  };
+  setTransactions((prev) => [inserted, ...prev]);
+  setTotalIncome(updatedIncome);
+  setTotalExpense(updatedExpense);
+  setTotalBalance(updatedBalance);
+  clearFormData();
+  toast.success("Transaction added successfully!");
+};
+
 
   /////////////////////////////////////////////////
 
@@ -207,6 +199,8 @@ function App() {
       setTransactions(data);
       console.log("data")
       console.log(data)
+      console.log("transactions")
+      console.log(transactions)
       // toast.success("Logged in successfully")
     }
   };
@@ -419,16 +413,16 @@ function App() {
                       transactions.map((tx, index) => (
                         <tr key={index} className="text-sm border-t">
                           <td className="px-4 py-2 border">
-                            {tx.Date?.slice(0, 10)}
+                            {tx.created_at?.slice(0, 10)}
                           </td>
                           <td className="px-4 py-2 border capitalize">
-                            {tx.Type}
+                            {tx.type}
                           </td>
                           <td className="px-4 py-2 border capitalize">
-                            {tx.Category}
+                            {tx.category}
                           </td>
-                          <td className="px-4 py-2 border">{tx.Note}</td>
-                          <td className="px-4 py-2 border">₹ {tx.Amount}</td>
+                          <td className="px-4 py-2 border">{tx.note}</td>
+                          <td className="px-4 py-2 border">₹ {tx.amount}</td>
                           <td className="px-4 py-2 border text-center">
                             <button
                               onClick={() => deleteRow(index)}
