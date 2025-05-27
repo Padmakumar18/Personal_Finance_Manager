@@ -39,8 +39,6 @@ function App() {
         setUser(session.user);
         fetchExpenses(session.user.id);
       }
-      console.log(session.user.id);
-      // console.log(session.user.id)
     });
 
     const {
@@ -56,36 +54,42 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(()=>{
-    console.log("user")
-    console.log(user)
-    console.log("transactions")
-    console.log(transactions)
-  },[user,transactions])
+  useEffect(() => {
+    // console.log("user")
+    // console.log(user)
+    console.log("transactions");
+    console.log(transactions);
+  }, [user, transactions]);
 
-  const deleteRow = (indexToDelete) => {
-    const transactionToDelete = transactions[indexToDelete];
-    const amount = parseInt(transactionToDelete.Amount);
+  const deleteRow = async (id) => {
+    const { error } = await supabase
+      .from("expense_tracker")
+      .delete()
+      .eq("id", id);
 
-    let updatedIncome = totalIncome;
-    let updatedExpense = totalExpense;
-
-    if (transactionToDelete.Type === "income") {
-      updatedIncome -= amount;
+    if (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete transaction.");
     } else {
-      updatedExpense -= amount;
+      toast.success("Transaction deleted.");
+      setTransactions((prev) => prev.filter((t) => t.id !== id));
+      const transactionToDelete = transactions.find((item) => item.id === id);
+      const amount = parseInt(transactionToDelete.Amount);
+
+      let updatedIncome = totalIncome;
+      let updatedExpense = totalExpense;
+
+      if (transactionToDelete.Type === "income") {
+        updatedIncome -= amount;
+      } else {
+        updatedExpense -= amount;
+      }
+
+      const updatedBalance = updatedIncome - updatedExpense;
+      setTotalIncome(updatedIncome);
+      setTotalExpense(updatedExpense);
+      setTotalBalance(updatedBalance);
     }
-
-    const updatedBalance = updatedIncome - updatedExpense;
-
-    const updatedTransactions = transactions.filter(
-      (_, index) => index !== indexToDelete
-    );
-
-    setTransactions(updatedTransactions);
-    setTotalIncome(updatedIncome);
-    setTotalExpense(updatedExpense);
-    setTotalBalance(updatedBalance);
   };
 
   const handleChange = (e) => {
@@ -115,59 +119,58 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  toast.success("Adding Transaction...");
+    e.preventDefault();
+    toast.success("Adding Transaction...");
 
-  const amount = parseFloat(formData.amount) || 0;
-  let updatedIncome = totalIncome;
-  let updatedExpense = totalExpense;
-  let updatedBalance = totalBalance;
+    const amount = parseFloat(formData.amount) || 0;
+    let updatedIncome = totalIncome;
+    let updatedExpense = totalExpense;
+    let updatedBalance = totalBalance;
 
-  if (formData.type === "income") {
-    updatedIncome += amount;
-    updatedBalance += amount;
-  } else {
-    updatedExpense += amount;
-    updatedBalance -= amount;
-    if (updatedBalance < 0) {
-      updatedBalance = 0;
-    }
-  }
-
-  const { data, error } = await supabase
-    .from('expense_tracker')
-    .insert([
-      {
-        user_id: user.id,
-        created_at: formData.date,
-        type: formData.type,
-        amount: amount,
-        category: formData.category,
-        note: formData.note || "----",
-        income: updatedIncome,
-        expense: updatedExpense,
-        balance: updatedBalance,
-        name: user.name || "User"
+    if (formData.type === "income") {
+      updatedIncome += amount;
+      updatedBalance += amount;
+    } else {
+      updatedExpense += amount;
+      updatedBalance -= amount;
+      if (updatedBalance < 0) {
+        updatedBalance = 0;
       }
-    ])
-    .select('*');
+    }
 
-  if (error) {
-    console.error("Insert error:", error);
-    toast.error("Failed to add transaction.");
-    return;
-  }
+    const { data, error } = await supabase
+      .from("expense_tracker")
+      .insert([
+        {
+          user_id: user.id,
+          created_at: formData.date,
+          type: formData.type,
+          amount: amount,
+          category: formData.category,
+          note: formData.note || "----",
+          income: updatedIncome,
+          expense: updatedExpense,
+          balance: updatedBalance,
+          name: user.name || "User",
+        },
+      ])
+      .select("*");
 
-  const inserted = data[0];
+    if (error) {
+      console.error("Insert error:", error);
+      toast.error("Failed to add transaction.");
+      return;
+    }
 
-  setTransactions((prev) => [inserted, ...prev]);
-  setTotalIncome(updatedIncome);
-  setTotalExpense(updatedExpense);
-  setTotalBalance(updatedBalance);
-  clearFormData();
-  toast.success("Transaction added successfully!");
-};
+    const inserted = data[0];
 
+    setTransactions((prev) => [inserted, ...prev]);
+    setTotalIncome(updatedIncome);
+    setTotalExpense(updatedExpense);
+    setTotalBalance(updatedBalance);
+    clearFormData();
+    toast.success("Transaction added successfully!");
+  };
 
   /////////////////////////////////////////////////
 
@@ -197,10 +200,11 @@ function App() {
       toast.error("Try again");
     } else {
       setTransactions(data);
-      console.log("data")
-      console.log(data)
-      console.log("transactions")
-      console.log(transactions)
+      if (data && data.length != 0) {
+        setTotalBalance(data[data.length - 1].balance);
+        setTotalExpense(data[data.length - 1].expense);
+        setTotalIncome(data[data.length - 1].income);
+      }
       // toast.success("Logged in successfully")
     }
   };
@@ -425,7 +429,7 @@ function App() {
                           <td className="px-4 py-2 border">₹ {tx.amount}</td>
                           <td className="px-4 py-2 border text-center">
                             <button
-                              onClick={() => deleteRow(index)}
+                              onClick={() => deleteRow(tx.id)}
                               className="px-3 py-1 text-red-500 rounded"
                             >
                               Delete
