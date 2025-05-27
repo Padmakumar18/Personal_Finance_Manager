@@ -74,12 +74,12 @@ function App() {
       toast.success("Transaction deleted.");
       setTransactions((prev) => prev.filter((t) => t.id !== id));
       const transactionToDelete = transactions.find((item) => item.id === id);
-      const amount = parseInt(transactionToDelete.Amount);
+      const amount = parseInt(transactionToDelete.amount);
 
       let updatedIncome = totalIncome;
       let updatedExpense = totalExpense;
 
-      if (transactionToDelete.Type === "income") {
+      if (transactionToDelete.type === "income") {
         updatedIncome -= amount;
       } else {
         updatedExpense -= amount;
@@ -171,8 +171,6 @@ function App() {
     clearFormData();
     toast.success("Transaction added successfully!");
   };
-
-  /////////////////////////////////////////////////
 
   const sendMagicLink = async () => {
     const { error } = await supabase.auth.signInWithOtp({
@@ -417,8 +415,12 @@ function App() {
                       transactions.map((tx, index) => (
                         <tr key={index} className="text-sm border-t">
                           <td className="px-4 py-2 border">
-                            {tx.created_at?.slice(0, 10)}
+                            {tx.created_at &&
+                              new Date(tx.created_at).toLocaleDateString(
+                                "en-GB"
+                              )}
                           </td>
+
                           <td className="px-4 py-2 border capitalize">
                             {tx.type}
                           </td>
