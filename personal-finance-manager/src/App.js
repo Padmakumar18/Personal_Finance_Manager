@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Loading from "./Loading";
 import "./App.css";
 import supabase from "./supabaseClient";
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from "react-hot-toast";
 
 function App() {
   const incomeCategories = ["Salary", "Business", "Investment", "Other"];
@@ -39,9 +39,8 @@ function App() {
         setUser(session.user);
         fetchExpenses(session.user.id);
       }
-      console.log(session.user.id)
+      console.log(session.user.id);
       // console.log(session.user.id)
-      
     });
 
     const {
@@ -57,10 +56,10 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-// useEffect(()=>{
-//   console.log("user")
-//   console.log(user)
-// },[user])
+  // useEffect(()=>{
+  //   console.log("user")
+  //   console.log(user)
+  // },[user])
 
   const deleteRow = (indexToDelete) => {
     const transactionToDelete = transactions[indexToDelete];
@@ -114,7 +113,7 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-    toast.success("Hi")
+    toast.success("Hi");
     e.preventDefault();
 
     const amount = parseInt(formData.amount) || 0;
@@ -150,18 +149,25 @@ function App() {
 
     console.log(newTransaction);
 
-    // const { error } = await supabase
-    // .from('expense_tracker')
-    // .insert([
-    //   {
-    //     user_id: user.id,
-    //     type,
-    //     category,
-    //     amount: parseFloat(amount),
-    //     date,
-    //     note,
-    //   }
-    // ])
+    const { error } = await supabase
+    .from('expense_tracker')
+    .insert([
+      {
+        user_id: user.id,
+        created_at: newTransaction.Date,
+        type:newTransaction.Type,
+        amount: parseFloat(amount),
+        category:newTransaction.Category,
+        note:newTransaction.Note,
+      }
+    ])
+
+    if(error) {
+      console.error(error)
+    }
+    else {
+      toast.success("Added")
+    }
 
     setTransactions((prev) => [newTransaction, ...prev]);
     setTotalIncome(updatedIncome);
@@ -181,9 +187,9 @@ function App() {
       },
     });
     if (error) {
-      toast.error('Failed to send magic link: ' + error.message)
+      toast.error("Failed to send magic link: " + error.message);
     } else {
-      toast.success('Check your email for the magic login link!')
+      toast.success("Check your email for the magic login link!");
     }
   };
 
@@ -196,9 +202,11 @@ function App() {
 
     if (error) {
       console.error("Error fetching expenses:", error);
-      toast.error("Try again")
+      toast.error("Try again");
     } else {
       setTransactions(data);
+      console.log("data")
+      console.log(data)
       // toast.success("Logged in successfully")
     }
   };
@@ -207,12 +215,12 @@ function App() {
     await supabase.auth.signOut();
     setUser(null);
     setTransactions([]);
-    toast.success("Logged out successfully")
+    toast.success("Logged out successfully");
   };
 
   return (
     <div className="container mx-auto mt-10">
-       <Toaster position="top-center" />
+      <Toaster position="top-center" />
       {!user ? (
         <div className=" min-h-screen flex items-center justify-center ">
           <div className="login bg-white p-8 rounded-2xl w-full max-w-md transition duration-300 ease-in-out">
