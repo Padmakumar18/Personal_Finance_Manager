@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Loading from "./Loading";
 import "./App.css";
-// import SellIcon from "@mui/icons-material/Sell";
-import axios from "axios";
-import supabase from './supabaseClient';
+import supabase from "./supabaseClient";
 
 function App() {
-  console.log("supabase")
-  console.log(supabase)
-  const GOOGLE_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbyBT9PZzeP0p0uxlcFL6zDQyBtL2QCTW7k0XdobKhbVTiX08QHAj20MDiq1j8jHMmHn/exec";
-
   const incomeCategories = ["Salary", "Business", "Investment", "Other"];
   const expenseCategories = [
     "Food",
@@ -21,9 +14,17 @@ function App() {
   ];
 
   const [totalIncome, setTotalIncome] = useState(0);
+
+  const [tempData, setData] = useState(null);
+
+  const [email, setEmail] = useState("");
+  const [user, setUser] = useState(null);
+
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
+
   const [transactions, setTransactions] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     type: "",
@@ -32,6 +33,27 @@ function App() {
     date: "",
     note: "",
   });
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchExpenses(session.user.id);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchExpenses(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const deleteRow = (indexToDelete) => {
     const transactionToDelete = transactions[indexToDelete];
@@ -57,29 +79,6 @@ function App() {
     setTotalExpense(updatedExpense);
     setTotalBalance(updatedBalance);
   };
-
-  const fetchTodos = async () => {
-    const { data, error } = await supabase.from('expense_tracker').select('*');
-    if (error) console.error('Fetch error:', error);
-    else console.log(data)
-  };
-
-  useEffect(() => {
-    fetchTodos()
-    fetch(GOOGLE_SCRIPT_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Google Sheet Data:", data);
-        if (data && data.length > 0) {
-          setTransactions(data);
-          setTotalIncome(data[data.length - 1].Income || 0);
-          setTotalExpense(data[data.length - 1].Expense || 0);
-          setTotalBalance(data[data.length - 1].Balance || 0);
-        }
-      })
-      .catch((err) => console.error("Error fetching data:", err))
-      .finally(() => setLoading(false));
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -107,57 +106,6 @@ function App() {
     });
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   const amount = parseInt(formData.amount) || 0;
-  //   let updatedIncome = totalIncome;
-  //   let updatedExpense = totalExpense;
-  //   let updatedBalance = totalBalance;
-
-  //   if (formData.type === "income") {
-  //     updatedIncome += amount;
-  //     updatedBalance += amount;
-  //   } else {
-  //     updatedExpense += amount;
-  //     updatedBalance -= amount;
-  //     if (updatedBalance < 0) {
-  //       updatedBalance = 0;
-  //     }
-  //   }
-
-  //   const newTransaction = {
-  //     ID:
-  //       transactions.length > 0
-  //         ? transactions[transactions.length - 1].ID + 1
-  //         : 1,
-  //     Type: formData.type,
-  //     Amount: amount,
-  //     Category: formData.category,
-  //     Date: formData.date,
-  //     Note: formData.note || "----",
-  //     Income: updatedIncome,
-  //     Expense: updatedExpense,
-  //     Balance: updatedBalance,
-  //   };
-
-  //   console.log(newTransaction);
-
-  //   setTransactions((prev) => [newTransaction, ...prev]);
-  //   setTotalIncome(updatedIncome);
-  //   setTotalExpense(updatedExpense);
-  //   setTotalBalance(updatedBalance);
-
-  //   try {
-  //     const response = await axios.post(GOOGLE_SCRIPT_URL, formData);
-  //     console.log("Data saved successfully:", response.data);
-  //   } catch (error) {
-  //     console.error("Error saving data:", error);
-  //   }
-
-  //   clearFormData();
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -177,65 +125,105 @@ function App() {
       }
     }
 
-    const newId =
-      transactions.length > 0
-        ? Math.max(...transactions.map((tx) => tx.ID)) + 1
-        : 1;
+    const newTransaction = {
+      ID:
+        transactions.length > 0
+          ? transactions[transactions.length - 1].ID + 1
+          : 1,
+      Type: formData.type,
+      Amount: amount,
+      Category: formData.category,
+      Date: formData.date,
+      Note: formData.note || "----",
+      Income: updatedIncome,
+      Expense: updatedExpense,
+      Balance: updatedBalance,
+    };
 
-    try {
-      const sheetData = {
-        action: "addTransaction",
-        data: {
-          ID: newId,
-          Date: formData.date || new Date().toISOString(),
-          Type: formData.type,
-          Amount: amount,
-          Category: formData.category,
-          Note: formData.note || "",
-          Income: updatedIncome,
-          Expense: updatedExpense,
-          Balance: updatedBalance,
-        },
-      };
+    console.log(newTransaction);
 
-      const response = await axios.post(GOOGLE_SCRIPT_URL, sheetData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    setTransactions((prev) => [newTransaction, ...prev]);
+    setTotalIncome(updatedIncome);
+    setTotalExpense(updatedExpense);
+    setTotalBalance(updatedBalance);
 
-      if (response.data.result === "success") {
-        const newTransaction = {
-          ID: newId,
-          Date: sheetData.data.Date,
-          Type: formData.type,
-          Amount: amount,
-          Category: formData.category,
-          Note: formData.note || "----",
-          Income: updatedIncome,
-          Expense: updatedExpense,
-          Balance: updatedBalance,
-        };
+    ////// Write put
 
-        setTransactions((prev) => [newTransaction, ...prev]);
-        setTotalIncome(updatedIncome);
-        setTotalExpense(updatedExpense);
-        setTotalBalance(updatedBalance);
-        clearFormData();
-      } else {
-        throw new Error("Failed to save to Google Sheet");
-      }
-    } catch (error) {
-      console.error("Error saving data:", error);
-      alert("Failed to save transaction. Please try again.");
+    clearFormData();
+  };
+
+  /////////////////////////////////////////////////
+
+  const sendMagicLink = async () => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+    // if (error) {
+    //   setMessage('Failed to send magic link: ' + error.message)
+    //    add toast
+    // } else {
+    //   setMessage('Check your email for the magic login link!')
+    // }
+  };
+
+  const fetchExpenses = async (userId) => {
+    const { data, error } = await supabase
+      .from("expense_tracker")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching expenses:", error);
+    } else {
+      setTransactions(data);
     }
   };
 
-  
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setTransactions([]);
+  };
 
   return (
     <div className="container mx-auto mt-10">
-      {loading ? (
+      {!user ? (
+        <div>
+          <p>Enter your email to sign in or sign up:</p>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ padding: "0.5rem", width: "100%" }}
+          />
+          <button
+            onClick={sendMagicLink}
+            style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
+          >
+            Send Magic Link
+          </button>
+        </div>
+      ) : // <div>
+      //   <p>Welcome, {user.email} <button onClick={logout}>Log out</button></p>
+      //   <h3>Your Expenses</h3>
+      //   {transactions.length === 0 ? (
+      //     <p>No expenses found.</p>
+      //   ) : (
+      //     <ul>
+      //       {transactions.map((expense) => (
+      //         <li key={expense.id}>
+      //           {expense.title} — ${expense.amount} on {new Date(expense.created_at).toLocaleDateString()}
+      //         </li>
+      //       ))}
+      //     </ul>
+      //   )}
+      // </div>
+      loading ? (
         <Loading />
       ) : (
         <div className="box p-5">
