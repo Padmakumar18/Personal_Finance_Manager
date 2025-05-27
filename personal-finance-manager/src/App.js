@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Loading from "./Loading";
 import "./App.css";
 import supabase from "./supabaseClient";
+import toast, { Toaster } from 'react-hot-toast';
 
 function App() {
   const incomeCategories = ["Salary", "Business", "Investment", "Other"];
@@ -14,8 +15,6 @@ function App() {
   ];
 
   const [totalIncome, setTotalIncome] = useState(0);
-
-  const [tempData, setData] = useState(null);
 
   const [email, setEmail] = useState("");
   const [user, setUser] = useState(null);
@@ -40,6 +39,9 @@ function App() {
         setUser(session.user);
         fetchExpenses(session.user.id);
       }
+      console.log(session.user.id)
+      // console.log(session.user.id)
+      
     });
 
     const {
@@ -54,6 +56,11 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+// useEffect(()=>{
+//   console.log("user")
+//   console.log(user)
+// },[user])
 
   const deleteRow = (indexToDelete) => {
     const transactionToDelete = transactions[indexToDelete];
@@ -107,6 +114,7 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
+    toast.success("Hi")
     e.preventDefault();
 
     const amount = parseInt(formData.amount) || 0;
@@ -142,12 +150,23 @@ function App() {
 
     console.log(newTransaction);
 
+    // const { error } = await supabase
+    // .from('expense_tracker')
+    // .insert([
+    //   {
+    //     user_id: user.id,
+    //     type,
+    //     category,
+    //     amount: parseFloat(amount),
+    //     date,
+    //     note,
+    //   }
+    // ])
+
     setTransactions((prev) => [newTransaction, ...prev]);
     setTotalIncome(updatedIncome);
     setTotalExpense(updatedExpense);
     setTotalBalance(updatedBalance);
-
-    ////// Write put
 
     clearFormData();
   };
@@ -161,12 +180,11 @@ function App() {
         shouldCreateUser: true,
       },
     });
-    // if (error) {
-    //   setMessage('Failed to send magic link: ' + error.message)
-    //    add toast
-    // } else {
-    //   setMessage('Check your email for the magic login link!')
-    // }
+    if (error) {
+      toast.error('Failed to send magic link: ' + error.message)
+    } else {
+      toast.success('Check your email for the magic login link!')
+    }
   };
 
   const fetchExpenses = async (userId) => {
@@ -178,8 +196,10 @@ function App() {
 
     if (error) {
       console.error("Error fetching expenses:", error);
+      toast.error("Try again")
     } else {
       setTransactions(data);
+      // toast.success("Logged in successfully")
     }
   };
 
@@ -187,63 +207,64 @@ function App() {
     await supabase.auth.signOut();
     setUser(null);
     setTransactions([]);
+    toast.success("Logged out successfully")
   };
 
   return (
     <div className="container mx-auto mt-10">
+       <Toaster position="top-center" />
       {!user ? (
-        <div>
-          <p>Enter your email to sign in or sign up:</p>
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: "0.5rem", width: "100%" }}
-          />
-          <button
-            onClick={sendMagicLink}
-            style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
-          >
-            Send Magic Link
-          </button>
+        <div className=" min-h-screen flex items-center justify-center ">
+          <div className="login bg-white p-8 rounded-2xl w-full max-w-md transition duration-300 ease-in-out">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800 text-center">
+              Welcome Back 👋
+            </h2>
+            <p className="text-sm text-gray-600 text-center mb-6">
+              Enter your email to sign in or sign up:
+            </p>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 transition duration-200"
+            />
+            <button
+              onClick={sendMagicLink}
+              className="w-full bg-purple-600 text-white py-3 rounded-xl mt-6 hover:bg-purple-700 transition duration-300 shadow-md"
+            >
+              Send Magic Link
+            </button>
+          </div>
         </div>
-      ) : // <div>
-      //   <p>Welcome, {user.email} <button onClick={logout}>Log out</button></p>
-      //   <h3>Your Expenses</h3>
-      //   {transactions.length === 0 ? (
-      //     <p>No expenses found.</p>
-      //   ) : (
-      //     <ul>
-      //       {transactions.map((expense) => (
-      //         <li key={expense.id}>
-      //           {expense.title} — ${expense.amount} on {new Date(expense.created_at).toLocaleDateString()}
-      //         </li>
-      //       ))}
-      //     </ul>
-      //   )}
-      // </div>
-      loading ? (
+      ) : loading ? (
         <Loading />
       ) : (
-        <div className="box p-5">
+        <div className="box">
           <div className="header flex justify-between items-center">
             <div className="title">
               <p className="titleFont">Expense Tracker</p>
             </div>
 
             <div className="flex">
-              <div className="totalExpense p-2">
-                <p>Total Income</p>
-                <p className="text-green-500">₹ {totalIncome}</p>
+              <div className="flex">
+                <div className="totalExpense p-2">
+                  <p>Total Income</p>
+                  <p className="text-green-500">₹ {totalIncome}</p>
+                </div>
+                <div className="totalExpense p-2 ml-3">
+                  <p>Total Expense</p>
+                  <p className="text-red-500">₹ {totalExpense}</p>
+                </div>
+                <div className="totalExpense p-2 ml-3">
+                  <p>Total Balance</p>
+                  <p className="text-blue-500">₹ {totalBalance}</p>
+                </div>
               </div>
-              <div className="totalExpense p-2 ml-3">
-                <p>Total Expense</p>
-                <p className="text-red-500">₹ {totalExpense}</p>
-              </div>
-              <div className="totalExpense p-2 ml-3">
-                <p>Total Balance</p>
-                <p className="text-blue-500">₹ {totalBalance}</p>
+              <div className="logoutButton ml-5">
+                <button className="logout_button" onClick={logout}>
+                  Log out
+                </button>
               </div>
             </div>
           </div>
