@@ -67,8 +67,8 @@ function App() {
       let updatedIncome = 0;
       let updatedExpense = 0;
       let updatedBalance = 0;
-      console.log("All Transactions:");
-      console.table(transactions);
+      // console.log("All Transactions:");
+      // console.table(transactions);
 
       transactions.forEach((a) => {
         if (a.type === "income") {
@@ -82,8 +82,6 @@ function App() {
       setTotalIncome(updatedIncome);
       setTotalExpense(updatedExpense);
       setTotalBalance(updatedBalance);
-    } else {
-      console.log("🚫 No transactions found.");
     }
   };
 
@@ -117,7 +115,7 @@ function App() {
     //   .eq("id", id);
 
     if (error_delete) {
-      console.error("Delete error:", error_delete);
+      // console.error("Delete error:", error_delete);
       // console.error("Update error:", error_update);
       toast.error("Failed to delete transaction.");
     } else {
@@ -160,7 +158,7 @@ function App() {
     e.preventDefault();
     toast.success("Adding Transaction...");
 
-    console.log(formData);
+    // console.log(formData);
 
     const amount = parseFloat(formData.amount) || 0;
     let updatedIncome = totalIncome;
@@ -197,7 +195,7 @@ function App() {
       .select("*");
 
     if (error) {
-      console.error("Insert error:", error);
+      // console.error("Insert error:", error);
       toast.error("Failed to add transaction.");
       return;
     }
@@ -234,11 +232,11 @@ function App() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching expenses:", error);
+      // console.error("Error fetching expenses:", error);
       toast.error("Try again");
     } else {
       setTransactions(data);
-      console.log(transactions);
+      // console.log(transactions);
       if (data && data.length != 0) {
         setTotalBalance(data[data.length - 1].balance);
         setTotalExpense(data[data.length - 1].expense);
