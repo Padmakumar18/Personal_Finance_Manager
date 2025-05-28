@@ -59,33 +59,71 @@ function App() {
     // console.log(user)
     console.log("transactions");
     console.log(transactions);
+    findIncomeExpense();
   }, [user, transactions]);
 
+  const findIncomeExpense = () => {
+    if (transactions && transactions.length > 0) {
+      let updatedIncome = 0;
+      let updatedExpense = 0;
+      let updatedBalance = 0;
+      console.log("All Transactions:");
+      console.table(transactions);
+
+      transactions.forEach((a, index) => {
+        if (a.type === "income") {
+          updatedIncome = updatedIncome + a.income;
+        } else if (a.type === "expense") {
+          updatedExpense = updatedExpense + a.expense;
+        }
+      });
+      updatedBalance =
+        updatedIncome - updatedExpense < 0 ? 0 : updatedIncome - updatedExpense;
+      setTotalIncome(updatedIncome);
+      setTotalExpense(updatedExpense);
+      setTotalBalance(updatedBalance);
+    } else {
+      console.log("🚫 No transactions found.");
+    }
+  };
+
   const deleteRow = async (id) => {
-    const { error } = await supabase
+    const transactionToDelete = transactions.find((item) => item.id === id);
+    const amount = parseInt(transactionToDelete.amount);
+
+    let updatedIncome = totalIncome;
+    let updatedExpense = totalExpense;
+    if (transactionToDelete.type === "income") {
+      updatedIncome -= amount;
+    } else {
+      updatedExpense -= amount;
+    }
+
+    const updatedBalance =
+      updatedIncome - updatedExpense == 0 ? 0 : updatedIncome - updatedExpense;
+
+    const { error_delete } = await supabase
       .from("expense_tracker")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      console.error("Delete error:", error);
+    // const { error_update } = await supabase
+    //   .from("expense_tracker")
+    //   .update({
+    //     income: updatedIncome,
+    //     expense: updatedExpense,
+    //     balance: updatedBalance,
+    //   })
+    //   .eq("id", id);
+
+    if (error_delete) {
+      console.error("Delete error:", error_delete);
+      // console.error("Update error:", error_update);
       toast.error("Failed to delete transaction.");
     } else {
       toast.success("Transaction deleted.");
       setTransactions((prev) => prev.filter((t) => t.id !== id));
-      const transactionToDelete = transactions.find((item) => item.id === id);
-      const amount = parseInt(transactionToDelete.amount);
 
-      let updatedIncome = totalIncome;
-      let updatedExpense = totalExpense;
-
-      if (transactionToDelete.type === "income") {
-        updatedIncome -= amount;
-      } else {
-        updatedExpense -= amount;
-      }
-
-      const updatedBalance = updatedIncome - updatedExpense;
       setTotalIncome(updatedIncome);
       setTotalExpense(updatedExpense);
       setTotalBalance(updatedBalance);
@@ -121,6 +159,8 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     toast.success("Adding Transaction...");
+
+    console.log(formData);
 
     const amount = parseFloat(formData.amount) || 0;
     let updatedIncome = totalIncome;
@@ -198,6 +238,7 @@ function App() {
       toast.error("Try again");
     } else {
       setTransactions(data);
+      console.log(transactions);
       if (data && data.length != 0) {
         setTotalBalance(data[data.length - 1].balance);
         setTotalExpense(data[data.length - 1].expense);
@@ -215,11 +256,11 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto mt-10">
+    <div className="container mx-auto px-4 mt-10">
       <Toaster position="top-center" />
       {!user ? (
-        <div className=" min-h-screen flex items-center justify-center ">
-          <div className="login bg-white p-8 rounded-2xl w-full max-w-md transition duration-300 ease-in-out">
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="login bg-white p-8 rounded-2xl w-full max-w-md transition duration-300 ease-in-out shadow-lg">
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 text-center">
               Welcome Back 👋
             </h2>
@@ -245,204 +286,198 @@ function App() {
         <Loading />
       ) : (
         <div className="box">
-          <div className="header flex justify-between items-center">
-            <div className="title">
-              <p className="titleFont">Expense Tracker</p>
-            </div>
+          <div className="header flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <p className="titleFont text-xl font-bold text-gray-800">
+              Expense Tracker
+            </p>
 
-            <div className="flex">
-              <div className="flex">
-                <div className="totalExpense p-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 text-sm text-center">
+                <div className="totalExpense p-2 bg-white rounded shadow">
                   <p>Total Income</p>
-                  <p className="text-green-500">₹ {totalIncome}</p>
+                  <p className="text-green-500 font-semibold">
+                    ₹ {totalIncome}
+                  </p>
                 </div>
-                <div className="totalExpense p-2 ml-3">
+                <div className="totalExpense p-2 bg-white rounded shadow">
                   <p>Total Expense</p>
-                  <p className="text-red-500">₹ {totalExpense}</p>
+                  <p className="text-red-500 font-semibold">₹ {totalExpense}</p>
                 </div>
-                <div className="totalExpense p-2 ml-3">
+                <div className="totalExpense p-2 bg-white rounded shadow">
                   <p>Total Balance</p>
-                  <p className="text-blue-500">₹ {totalBalance}</p>
+                  <p className="text-blue-500 font-semibold">
+                    ₹ {totalBalance}
+                  </p>
                 </div>
               </div>
-              <div className="logoutButton ml-5">
-                <button className="logout_button" onClick={logout}>
+              <div className="logoutButton">
+                <button
+                  className="logout_button bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  onClick={logout}
+                >
                   Log out
                 </button>
               </div>
             </div>
           </div>
-          <div className="content grid md:grid-cols-3 gap-4 mt-6">
+
+          <div className="content grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div className="form md:col-span-1 p-4 rounded bg-white shadow-md">
               <h2 className="text-xl font-semibold mb-4">
                 Add New Transaction
               </h2>
-              <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Type <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select --</option>
-                      <option value="income">Income</option>
-                      <option value="expense">Expense</option>
-                    </select>
-                  </div>
+              <form onSubmit={handleSubmit} className="bg-white space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Type <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">-- Select --</option>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                  </select>
+                </div>
 
-                  {/* Category */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Category <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select --</option>
-                      {(formData.type === "income"
-                        ? incomeCategories
-                        : formData.type === "expense"
-                        ? expenseCategories
-                        : []
-                      ).map((cat) => (
-                        <option key={cat} value={cat.toLowerCase()}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">-- Select --</option>
+                    {(formData.type === "income"
+                      ? incomeCategories
+                      : formData.type === "expense"
+                      ? expenseCategories
+                      : []
+                    ).map((cat) => (
+                      <option key={cat} value={cat.toLowerCase()}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                  {/* Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Amount <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="amount"
-                      value={formData.amount || ""}
-                      onChange={handleChange}
-                      required
-                      step="0.01"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amount <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="amount"
+                    value={formData.amount || ""}
+                    onChange={handleChange}
+                    required
+                    step="0.01"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Date <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={formData.date ? formData.date.slice(0, 10) : ""}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Date <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date ? formData.date.slice(0, 10) : ""}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
 
-                  {/* Note */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Note
-                    </label>
-                    <textarea
-                      name="note"
-                      value={formData.note}
-                      onChange={handleChange}
-                      rows="3"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Note
+                  </label>
+                  <textarea
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    rows="3"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
 
-                  <div className="flex justify-between">
-                    <div className="w-1/2 pr-2">
-                      <button
-                        type="reset"
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                    <div className="w-1/2 pl-2">
-                      <button
-                        type="submit"
-                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                  <button
+                    type="reset"
+                    className="w-full sm:w-1/2 px-4 py-2 border text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-400 focus:outline-none"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-full sm:w-1/2 px-4 py-2 border text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none"
+                  >
+                    Submit
+                  </button>
                 </div>
               </form>
             </div>
 
-            <div className="showTransaction md:col-span-2 p-4 rounded shadow-inner">
-              <div className="overflow-x-auto">
-                <table className="min-w-full table-auto bg-white border rounded shadow-sm">
-                  <thead>
-                    <tr className="bg-blue-100 text-left text-sm font-medium text-gray-700">
-                      <th className="px-4 py-2 border">Date</th>
-                      <th className="px-4 py-2 border">Type</th>
-                      <th className="px-4 py-2 border">Category</th>
-                      <th className="px-4 py-2 border">Note</th>
-                      <th className="px-4 py-2 border">Amount</th>
-                      <th className="px-4 py-2 border">Action</th>
+            <div className="showTransaction md:col-span-2 p-4 rounded shadow-inner bg-white overflow-x-auto">
+              <table className="min-w-full table-auto text-sm border rounded shadow-sm">
+                <thead>
+                  <tr className="bg-blue-100 text-left font-medium text-gray-700">
+                    <th className="px-4 py-2 border">Date</th>
+                    <th className="px-4 py-2 border">Type</th>
+                    <th className="px-4 py-2 border">Category</th>
+                    <th className="px-4 py-2 border">Note</th>
+                    <th className="px-4 py-2 border">Amount</th>
+                    <th className="px-4 py-2 border">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="text-center text-gray-500 italic py-4"
+                      >
+                        No transactions to display yet.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan="5"
-                          className="text-center text-gray-500 italic py-4"
-                        >
-                          No transactions to display yet.
+                  ) : (
+                    transactions.map((tx, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="px-4 py-2 border">
+                          {tx.created_at &&
+                            new Date(tx.created_at).toLocaleDateString("en-GB")}
+                        </td>
+                        <td className="px-4 py-2 border capitalize">
+                          {tx.type}
+                        </td>
+                        <td className="px-4 py-2 border capitalize">
+                          {tx.category}
+                        </td>
+                        <td className="px-4 py-2 border">{tx.note}</td>
+                        <td className="px-4 py-2 border">₹ {tx.amount}</td>
+                        <td className="px-4 py-2 border text-center">
+                          <button
+                            onClick={() => deleteRow(tx.id)}
+                            className="px-3 py-1 text-red-500 hover:text-red-700"
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
-                    ) : (
-                      transactions.map((tx, index) => (
-                        <tr key={index} className="text-sm border-t">
-                          <td className="px-4 py-2 border">
-                            {tx.created_at &&
-                              new Date(tx.created_at).toLocaleDateString(
-                                "en-GB"
-                              )}
-                          </td>
-
-                          <td className="px-4 py-2 border capitalize">
-                            {tx.type}
-                          </td>
-                          <td className="px-4 py-2 border capitalize">
-                            {tx.category}
-                          </td>
-                          <td className="px-4 py-2 border">{tx.note}</td>
-                          <td className="px-4 py-2 border">₹ {tx.amount}</td>
-                          <td className="px-4 py-2 border text-center">
-                            <button
-                              onClick={() => deleteRow(tx.id)}
-                              className="px-3 py-1 text-red-500 rounded"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
