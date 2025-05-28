@@ -57,8 +57,8 @@ function App() {
   useEffect(() => {
     // console.log("user")
     // console.log(user)
-    console.log("transactions");
-    console.log(transactions);
+    // console.log("transactions");
+    // console.log(transactions);
     findIncomeExpense();
   }, [user, transactions]);
 
@@ -70,7 +70,7 @@ function App() {
       console.log("All Transactions:");
       console.table(transactions);
 
-      transactions.forEach((a, index) => {
+      transactions.forEach((a) => {
         if (a.type === "income") {
           updatedIncome = updatedIncome + a.income;
         } else if (a.type === "expense") {
@@ -244,7 +244,6 @@ function App() {
         setTotalExpense(data[data.length - 1].expense);
         setTotalIncome(data[data.length - 1].income);
       }
-      // toast.success("Logged in successfully")
     }
   };
 
