@@ -86,7 +86,7 @@ function App() {
       .eq("id", id);
 
     if (error_delete) {
-      console.error("Delete error:", error_delete);
+      // console.error("Delete error:", error_delete);
       toast.error("Failed to delete transaction.");
     } else {
       toast.success("Transaction deleted.");
@@ -94,7 +94,7 @@ function App() {
       let updatedTransaction = transactions.filter((t) => t.id !== id);
       setTransactions(updatedTransaction);
 
-      console.log("Updated transactions:", updatedTransaction);
+      // console.log("Updated transactions:", updatedTransaction);
 
       if (updatedTransaction.length === 0) {
         setTotalIncome(0);
@@ -153,7 +153,7 @@ function App() {
       .select("*");
 
     if (error) {
-      console.error("Insert error:", error);
+      // console.error("Insert error:", error);
       toast.error("Failed to add transaction.");
       return;
     }
@@ -178,7 +178,7 @@ function App() {
     });
     if (error) {
       toast.error("Failed to send magic link: ");
-      console.error(error.message);
+      // console.error(error.message);
     } else {
       toast.success("Check your email for the magic login link!");
     }
@@ -192,7 +192,7 @@ function App() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching expenses:", error);
+      // console.error("Error fetching expenses:", error);
       toast.error("Try again");
     } else {
       setTransactions(data);
