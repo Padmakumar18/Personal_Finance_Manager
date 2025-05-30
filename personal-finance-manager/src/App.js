@@ -55,10 +55,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // console.log("user")
-    // console.log(user)
-    // console.log("transactions");
-    // console.log(transactions);
     findIncomeExpense();
   }, [user, transactions]);
 
@@ -67,14 +63,12 @@ function App() {
       let updatedIncome = 0;
       let updatedExpense = 0;
       let updatedBalance = 0;
-      // console.log("All Transactions:");
-      // console.table(transactions);
 
       transactions.forEach((a) => {
         if (a.type === "income") {
-          updatedIncome = updatedIncome + a.income;
+          updatedIncome = updatedIncome + a.amount;
         } else if (a.type === "expense") {
-          updatedExpense = updatedExpense + a.expense;
+          updatedExpense = updatedExpense + a.amount;
         }
       });
       updatedBalance =
@@ -86,14 +80,13 @@ function App() {
   };
 
   const deleteRow = async (id) => {
-
     const { error_delete } = await supabase
       .from("expense_tracker")
       .delete()
       .eq("id", id);
 
     if (error_delete) {
-      // console.error("Delete error:", error_delete);
+      console.error("Delete error:", error_delete);
       toast.error("Failed to delete transaction.");
     } else {
       toast.success("Transaction deleted.");
@@ -150,15 +143,18 @@ function App() {
       .select("*");
 
     if (error) {
-      // console.error("Insert error:", error);
+      console.error("Insert error:", error);
       toast.error("Failed to add transaction.");
       return;
     }
 
     const inserted = data[0];
+    setTotalBalance(0);
+    setTotalExpense(0);
+    setTotalIncome(0);
 
     setTransactions((prev) => [inserted, ...prev]);
-   
+
     clearFormData();
     toast.success("Transaction added successfully!");
   };
@@ -171,7 +167,8 @@ function App() {
       },
     });
     if (error) {
-      toast.error("Failed to send magic link: " + error.message);
+      toast.error("Failed to send magic link: ");
+      console.error(error.message);
     } else {
       toast.success("Check your email for the magic login link!");
     }
@@ -185,11 +182,10 @@ function App() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      // console.error("Error fetching expenses:", error);
+      console.error("Error fetching expenses:", error);
       toast.error("Try again");
     } else {
       setTransactions(data);
-      // console.log(transactions);
       if (data && data.length != 0) {
         setTotalBalance(data[data.length - 1].balance);
         setTotalExpense(data[data.length - 1].expense);
