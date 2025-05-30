@@ -56,14 +56,14 @@ function App() {
 
   useEffect(() => {
     findIncomeExpense();
-  }, [user, transactions]);
+  }, [transactions]);
 
   const findIncomeExpense = () => {
-    if (transactions && transactions.length > 0) {
-      let updatedIncome = 0;
-      let updatedExpense = 0;
-      let updatedBalance = 0;
+    let updatedIncome = 0;
+    let updatedExpense = 0;
+    let updatedBalance = 0;
 
+    if (transactions && transactions.length > 0) {
       transactions.forEach((a) => {
         if (a.type === "income") {
           updatedIncome = updatedIncome + a.amount;
@@ -71,16 +71,16 @@ function App() {
           updatedExpense = updatedExpense + a.amount;
         }
       });
-      updatedBalance =
-        updatedIncome - updatedExpense < 0 ? 0 : updatedIncome - updatedExpense;
-      setTotalIncome(updatedIncome);
-      setTotalExpense(updatedExpense);
-      setTotalBalance(updatedBalance);
     }
+    updatedBalance =
+      updatedIncome < updatedExpense ? 0 : updatedIncome - updatedExpense;
+    setTotalIncome(updatedIncome);
+    setTotalExpense(updatedExpense);
+    setTotalBalance(updatedBalance);
   };
 
   const deleteRow = async (id) => {
-    const { error_delete } = await supabase
+    const { error: error_delete } = await supabase
       .from("expense_tracker")
       .delete()
       .eq("id", id);
@@ -90,7 +90,17 @@ function App() {
       toast.error("Failed to delete transaction.");
     } else {
       toast.success("Transaction deleted.");
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
+
+      let updatedTransaction = transactions.filter((t) => t.id !== id);
+      setTransactions(updatedTransaction);
+
+      console.log("Updated transactions:", updatedTransaction);
+
+      if (updatedTransaction.length === 0) {
+        setTotalIncome(0);
+        setTotalExpense(0);
+        setTotalBalance(0);
+      }
     }
   };
 
@@ -186,11 +196,6 @@ function App() {
       toast.error("Try again");
     } else {
       setTransactions(data);
-      if (data && data.length != 0) {
-        setTotalBalance(data[data.length - 1].balance);
-        setTotalExpense(data[data.length - 1].expense);
-        setTotalIncome(data[data.length - 1].income);
-      }
     }
   };
 
@@ -231,7 +236,7 @@ function App() {
       ) : loading ? (
         <Loading />
       ) : (
-        <div className="box">
+        <div className="box ">
           <div className="header flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <p className="titleFont text-xl font-bold text-gray-800">
               Expense Tracker
@@ -272,7 +277,7 @@ function App() {
               <h2 className="text-xl font-semibold mb-4">
                 Add New Transaction
               </h2>
-              <form onSubmit={handleSubmit} className="bg-white space-y-4">
+              <form onSubmit={handleSubmit} className="bg-white space-y-4 ">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Type <span className="text-red-600">*</span>
