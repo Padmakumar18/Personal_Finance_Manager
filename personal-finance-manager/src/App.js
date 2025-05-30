@@ -86,45 +86,18 @@ function App() {
   };
 
   const deleteRow = async (id) => {
-    const transactionToDelete = transactions.find((item) => item.id === id);
-    const amount = parseInt(transactionToDelete.amount);
-
-    let updatedIncome = totalIncome;
-    let updatedExpense = totalExpense;
-    if (transactionToDelete.type === "income") {
-      updatedIncome -= amount;
-    } else {
-      updatedExpense -= amount;
-    }
-
-    const updatedBalance =
-      updatedIncome - updatedExpense == 0 ? 0 : updatedIncome - updatedExpense;
 
     const { error_delete } = await supabase
       .from("expense_tracker")
       .delete()
       .eq("id", id);
 
-    // const { error_update } = await supabase
-    //   .from("expense_tracker")
-    //   .update({
-    //     income: updatedIncome,
-    //     expense: updatedExpense,
-    //     balance: updatedBalance,
-    //   })
-    //   .eq("id", id);
-
     if (error_delete) {
       // console.error("Delete error:", error_delete);
-      // console.error("Update error:", error_update);
       toast.error("Failed to delete transaction.");
     } else {
       toast.success("Transaction deleted.");
       setTransactions((prev) => prev.filter((t) => t.id !== id));
-
-      setTotalIncome(updatedIncome);
-      setTotalExpense(updatedExpense);
-      setTotalBalance(updatedBalance);
     }
   };
 
@@ -158,24 +131,6 @@ function App() {
     e.preventDefault();
     toast.success("Adding Transaction...");
 
-    // console.log(formData);
-
-    const amount = parseFloat(formData.amount) || 0;
-    let updatedIncome = totalIncome;
-    let updatedExpense = totalExpense;
-    let updatedBalance = totalBalance;
-
-    if (formData.type === "income") {
-      updatedIncome += amount;
-      updatedBalance += amount;
-    } else {
-      updatedExpense += amount;
-      updatedBalance -= amount;
-      if (updatedBalance < 0) {
-        updatedBalance = 0;
-      }
-    }
-
     const { data, error } = await supabase
       .from("expense_tracker")
       .insert([
@@ -183,12 +138,12 @@ function App() {
           user_id: user.id,
           created_at: formData.date,
           type: formData.type,
-          amount: amount,
+          amount: formData.amount,
           category: formData.category,
           note: formData.note || "----",
-          income: updatedIncome,
-          expense: updatedExpense,
-          balance: updatedBalance,
+          income: totalIncome,
+          expense: totalExpense,
+          balance: totalBalance,
           name: user.name || "User",
         },
       ])
@@ -203,9 +158,7 @@ function App() {
     const inserted = data[0];
 
     setTransactions((prev) => [inserted, ...prev]);
-    setTotalIncome(updatedIncome);
-    setTotalExpense(updatedExpense);
-    setTotalBalance(updatedBalance);
+   
     clearFormData();
     toast.success("Transaction added successfully!");
   };
